@@ -8,12 +8,12 @@ window.COD_CONFIG = {
   META_PIXEL_ID: '4483197801948572,29525607110372842', // nhiều pixel: cách nhau dấu phẩy
   TIKTOK_PIXEL_ID: 'YOUR_TIKTOK_PIXEL_CODE', // chưa dùng; admin điền khi có
   // id = mã SKU ngắn, KHÔNG dấu (vd 'KPCT-MEO-01'); name = tên sản phẩm hiện trong Sheet
-  PRODUCT: { id: 'HINOX-1500', name: 'Hộp inox 304 nắp kín 1500ml', currency: 'VND' },
+  PRODUCT: { id: 'HINOX-1500', name: 'Hộp inox 304', currency: 'VND' },
   // Giá: price = tiền hàng của gói; ship = phí ship khách trả (0 = freeship). compare = giá gạch, CHỈ điền khi đã thật sự bán giá đó trước đây, không thì null.
   // Gói '1' được chọn sẵn (mặc định chủ shop). Gói '2' gắn nhãn "Phổ biến nhất" trong HTML.
   // Mỗi lần đổi giá ở đây phải đổi luôn chữ giá trong index.html (hero, bảng giá, form, FAQ, JSON-LD) — check_landing.py sẽ báo nếu lệch.
   PACKAGES: [
-    { key: '1', label: 'Set 3 hộp', qty: 3, price: 149000, compare: null, note: 'Phí ship 20.000đ', ship: 20000 },
+    { key: '1', label: 'Set 3 hộp', qty: 3, price: 149000, compare: null, note: 'Freeship', ship: 0 },
     { key: '2', label: 'Set 5 hộp', qty: 5, price: 229000, compare: null, note: 'Freeship', ship: 0, popular: true },
     { key: '3', label: 'Set 10 hộp', qty: 10, price: 399000, compare: null, note: 'Freeship', ship: 0 }
   ],
