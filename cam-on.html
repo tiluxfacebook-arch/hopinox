@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="vi" data-thankyou>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Đặt hàng thành công – cảm ơn bạn!</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font:16px/1.6 'Be Vietnam Pro',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#1f2a24;background:#f6f8f6}
+main{max-width:480px;margin:0 auto;min-height:100vh;padding:28px 18px}
+h1{font-family:'Be Vietnam Pro',-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;text-transform:none;font-size:1.9rem;line-height:1.15;color:#2f6b46;margin:.2rem 0 .6rem}
+h2,h3{font-family:'Be Vietnam Pro',-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;text-transform:none}
+.box{background:#fff;border-radius:14px;padding:16px;margin:14px 0;box-shadow:rgba(30,42,68,.14) 0 12px 40px 0}
+ol{padding-left:20px;color:#5a5562}.btn{display:flex;align-items:center;justify-content:center;width:100%;border:0;border-radius:9999px;background:#2f6b46;color:#fff;font-weight:700;font-size:1rem;padding:14px;text-align:center;text-decoration:none;min-height:48px;cursor:pointer;box-sizing:border-box}
+.btn.alt{background:#fff;color:#1f2a24;margin-top:10px}.note{font-size:.85rem;color:#4f7a60}
+</style>
+<script src="assets/config.js"></script>
+<script src="assets/cod.js"></script>
+</head>
+<body>
+<main>
+  <h1>✅ Đặt hàng thành công!</h1>
+  <p>Mã đơn: <b id="oid">—</b></p>
+  <div class="box">
+    <b>Tổng thanh toán khi nhận: <span id="val">—</span></b><br>
+    <span id="pkg"></span><br>
+    Bạn chỉ trả tiền sau khi nhận và kiểm tra hàng.
+  </div>
+  <h2 style="font-size:1.1rem">Bước tiếp theo</h2>
+  <ol>
+    <li>Nhân viên sẽ <b>gọi xác nhận đơn</b> trong giờ làm việc (8:00–21:00). Vui lòng để ý điện thoại.</li>
+    <li>Sau khi xác nhận, hàng được gửi đi; thời gian giao 1–5 ngày.</li>
+    <li>Cần sửa đơn? Nhắn Zalo hoặc gọi hotline bên dưới.</li>
+  </ol>
+  <div id="upsell" class="box" hidden>
+    <b>Thêm vào đơn (không bắt buộc):</b> <span id="up-name"></span> – <b id="up-price"></b><br>
+    <span class="note">Gửi chung kiện hàng với đơn vừa đặt.</span>
+    <button class="btn" id="up-btn" type="button" style="margin-top:8px">Thêm vào đơn</button>
+  </div>
+  <a class="btn alt" id="zalo" href="#">💬 Nhắn Zalo cho shop</a>
+  <a class="btn alt" id="tel" href="#">📞 Gọi hotline</a>
+  <p class="note" id="demo" hidden>⚠️ Chế độ DEMO: chưa cấu hình ENDPOINT nên đơn không được lưu và không có event nào được gửi.</p>
+</main>
+<script>
+(function () {
+  var C = window.COD_CONFIG, o = {};
+  try { o = JSON.parse(sessionStorage.getItem('cod_last_order') || '{}'); } catch (e) {}
+  var oid = new URLSearchParams(location.search).get('oid') || o.order_id || '';
+  var fmt = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+  document.getElementById('oid').textContent = oid || '—';
+  document.getElementById('val').textContent = fmt(o.value);
+  document.getElementById('pkg').textContent = o.package ? C.PRODUCT.name + ' – ' + o.package : '';
+  document.getElementById('zalo').href = C.ZALO; document.getElementById('tel').href = 'tel:' + C.HOTLINE;
+  if (o.demo) document.getElementById('demo').hidden = false;
+
+  // Bắn event đúng 1 lần cho mỗi đơn (F5 không bắn lại). Purchase KHÔNG bắn ở đây:
+  // Purchase chỉ gửi từ server khi sale đổi trạng thái "Đã chốt".
+  var firedKey = 'cod_fired_' + oid;
+  var shouldFire = oid && o.order_id === oid && !localStorage.getItem(firedKey) && !o.demo && o.consent === true; // không tick đồng ý quảng cáo → không bắn event
+  var phone84 = o.phone ? '84' + String(o.phone).slice(1) : '';
+  var parts = String(o.name || '').trim().split(/\s+/);
+  var fb = shouldFire ? { ph: phone84, fn: parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '', ln: parts.length > 1 ? parts[0].toLowerCase() : '' } : {};
+  Promise.all([window.codSha256(phone84 ? '+' + phone84 : ''), window.codSha256(window.codIds().external_id)]).then(function (h) {
+    window.codLoadPixels({ fb: fb, tt: shouldFire ? { phone_number: h[0], external_id: h[1] } : null });
+    if (!shouldFire) return;
+    var data = { value: o.value, currency: 'VND', content_ids: [C.PRODUCT.id], content_type: 'product', content_name: C.PRODUCT.name, num_items: o.qty };
+    if (window.fbq) {
+      fbq('track', 'CompleteRegistration', data, { eventID: o.event_id + '_cr' });
+      fbq('track', 'Lead', data, { eventID: o.event_id + '_lead' });
+    }
+    if (window.ttq) {
+      var tdata = { value: o.value, currency: 'VND', content_type: 'product', contents: [{ content_id: C.PRODUCT.id, content_name: C.PRODUCT.name, quantity: o.qty }] };
+      ttq.track('CompleteRegistration', tdata, { event_id: o.event_id + '_cr' });
+      ttq.track('SubmitForm', tdata, { event_id: o.event_id + '_sf' });
+    }
+    localStorage.setItem(firedKey, '1');
+  });
+
+  // Upsell 1 chạm (opt-in): cộng vào đơn trong sheet
+  if (C.UPSELL && oid && !o.demo && String(C.ENDPOINT).indexOf('YOUR_') !== 0) {
+    var box = document.getElementById('upsell'); box.hidden = false;
+    document.getElementById('up-name').textContent = C.UPSELL.name;
+    document.getElementById('up-price').textContent = fmt(C.UPSELL.price);
+    document.getElementById('up-btn').onclick = function () {
+      var b = this; b.disabled = true; b.textContent = 'Đang thêm…';
+      fetch(C.ENDPOINT, { method: 'POST', body: JSON.stringify({ type: 'upsell', order_id: oid, product_id: C.UPSELL.id, product_name: C.UPSELL.name, value: C.UPSELL.price }) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { b.textContent = j.ok ? '✓ Đã thêm vào đơn' : 'Chưa thêm được – nhắn Zalo giúp shop'; if (j.ok && window.fbq) fbq('trackCustom', 'UpsellAdded', { value: C.UPSELL.price, currency: 'VND' }); })
+        .catch(function () { b.disabled = false; b.textContent = 'Thử lại'; });
+    };
+  }
+})();
+</script>
+</body>
+</html>
